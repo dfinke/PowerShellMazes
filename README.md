@@ -5,3 +5,11 @@ Code Your Own Twisty Little Passages"](https://pragprog.com/book/jbmaze/mazes-fo
 
 His book is written in Ruby and I'm porting it to PowerShell v5 using the new `class` keyword.
 
+In Action
+-
+
+![image](https://raw.githubusercontent.com/dfinke/PowerShellMazes/master/images/maze.gif)
+
+Drawing the Maze with ToPng
+-
+![image](https://raw.githubusercontent.com/dfinke/PowerShellMazes/master/images/mazeBMP.png)
