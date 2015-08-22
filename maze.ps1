@@ -1,4 +1,8 @@
-param($Rows=8, $Columns=8)
+param(
+    $Rows=8,
+    $Columns=8,
+    [Switch]$AsPng
+)
 
 $null = [reflection.assembly]::LoadWithPartialName( "System.Windows.Forms")
 $null = [reflection.assembly]::LoadWithPartialName( "System.Drawing")
@@ -181,8 +185,11 @@ class BinaryTree {
     }
 }
 
-cls
-
 $Grid = [Grid]::new($Rows, $Columns)
 $bt   = [BinaryTree]::new($Grid)
-$Grid.ToPng(40, "c:\temp\test.png")
+
+if($AsPng) {
+    $Grid.ToPng(40, "$pwd\test.png")
+} else {
+    $Grid.DisplayMaze()
+}
