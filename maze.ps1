@@ -1,20 +1,21 @@
 param($Rows=8, $Columns=8)
 
-Add-Type -AssemblyName System.Drawing
+$null = [reflection.assembly]::LoadWithPartialName( "System.Windows.Forms")
+$null = [reflection.assembly]::LoadWithPartialName( "System.Drawing")
 
 class Cell {
 
     [int]$Row
     [int]$Col
-    
+
     $links = @{}
-  
+
     [Cell]$North
     [Cell]$East
     [Cell]$South
     [Cell]$West
-    
-    Hidden [Cell[]] $TheNeighbors 
+
+    Hidden [Cell[]] $TheNeighbors
 
     Cell([int]$Row, [int]$Col){
         $this.Row=$Row
@@ -24,8 +25,8 @@ class Cell {
     Link([Cell]$Cell,$bidi) {
         $this.links[$Cell] = $true
         if($bidi) {
-            $Cell.Link($this, $false) 
-        }        
+            $Cell.Link($this, $false)
+        }
     }
 
     UnLink([Cell]$Cell, $bidi) {
@@ -36,16 +37,16 @@ class Cell {
 
     ClearNeighbors() { $this.TheNeighbors = @() }
 
-    [Cell[]] Neighbors() {        
+    [Cell[]] Neighbors() {
         if($this.TheNeighbors.Count -eq 0) {
-            $this.TheNeighbors = $this.North, $this.South, $this.West, $this.East 
+            $this.TheNeighbors = $this.North, $this.South, $this.West, $this.East
         }
         return $this.TheNeighbors
     }
 
-    [bool] IsLinked ([Cell]$cell) { 
+    [bool] IsLinked ([Cell]$cell) {
         if($cell -eq $null) {return $false}
-        return $this.links.ContainsKey($cell) 
+        return $this.links.ContainsKey($cell)
     }
 
     [object] GetLinks()  { return $this.links.keys }
@@ -64,9 +65,9 @@ class Grid {
     }
 
     [int] Size() { return $this.NumberOfRows*$this.NumberOfColumns}
-    
+
     [Cell] RandomCell() {
-        
+
         $row = Get-Random -Minimum 0 -Maximum ($this.NumberOfRows-1)
         $column = Get-Random -Minimum 0 -Maximum ($this.NumberOfColumns-1)
 
@@ -77,16 +78,16 @@ class Grid {
         $this.Cells = New-Object 'object[,]' $this.NumberOfRows,$this.NumberOfColumns
 
         for ($row = 0; $row -lt $this.NumberOfRows; $row++)
-        { 
+        {
             for ($col = 0; $col -lt $this.NumberOfColumns; $col++)
-            { 
+            {
                $this.Cells[$row,$col]=[Cell]::new($row, $col)
-            }            
-        }        
-    
+            }
+        }
+
         foreach ($cell in $this.Cells) {
-            $row, $col= $cell.row, $cell.Col 
-            
+            $row, $col= $cell.row, $cell.Col
+
             $cell.North = $this.Cells[($row-1), $col]
             $cell.South = $this.Cells[($row+1), $col]
             $cell.West  = $this.Cells[$row, ($col-1)]
@@ -95,20 +96,20 @@ class Grid {
     }
 
 
-    [string] DisplayMaze() { 
+    [string] DisplayMaze() {
 
         $output = "+" + ("---+" * ($this.NumberOfColumns-1)) + "`n"
 
-        for ($r = 0; $r -lt $this.NumberOfRows; $r++) { 
+        for ($r = 0; $r -lt $this.NumberOfRows; $r++) {
             $top    = "|"
             $bottom = "+"
 
-            for ($c = 1; $c -lt $this.NumberOfColumns; $c++) { 
-                
-                [Cell]$cell = $this.Cells[$r,$c]                
-                
-                $body = "   "                                
-                
+            for ($c = 1; $c -lt $this.NumberOfColumns; $c++) {
+
+                [Cell]$cell = $this.Cells[$r,$c]
+
+                $body = "   "
+
                 $eastBoundary = "|"
                 if($cell.East -And $cell.IsLinked($cell.East)) { $eastBoundary = " " }
 
@@ -123,11 +124,11 @@ class Grid {
 
             $output+=$top + "`n"
             $output+=$bottom + "`n"
-        }        
+        }
 
         return $output
     }
-    
+
     ToPng($CellSize, $FileName) {
 
         $background = "White"
@@ -138,10 +139,10 @@ class Grid {
         $wall = New-Object System.Drawing.Pen 'Black', 1
 
         $bmp = New-Object System.Drawing.Bitmap ($width+1), ($height+1)
-        
+
         $graphics = [System.Drawing.Graphics]::FromImage($bmp)
         $graphics.Clear($background )
-        
+
         foreach ($cell in $this.Cells)
         {
             $x1 = $cell.Col*$CellSize
@@ -151,10 +152,10 @@ class Grid {
 
             if(!$cell.North) { $graphics.DrawLine($wall, $x1, $y1, $x2, $y1) }
             if(!$cell.West)  { $graphics.DrawLine($wall, $x1, $y1, $x1, $y2) }
-            
+
             if($cell.IsLinked($cell.East))  { $graphics.DrawLine($wall, $x2, $y1, $x2, $y2) }
             if($cell.IsLinked($cell.South)) { $graphics.DrawLine($wall, $x1, $y2, $x2, $y2) }
-        }        
+        }
 
         $bmp.Save($FileName)
         Invoke-Item $FileName
@@ -168,13 +169,13 @@ class BinaryTree {
         $this.grid = $grid
 
         foreach ($cell in $grid.Cells) {
-            
+
             $cell.ClearNeighbors()
-            
+
             if($cell.North) { $cell.TheNeighbors  = $cell.North }
-            if($cell.East)  { $cell.TheNeighbors += $cell.East  }            
-            
-            $neighbor = $cell.TheNeighbors | Get-Random 
+            if($cell.East)  { $cell.TheNeighbors += $cell.East  }
+
+            $neighbor = $cell.TheNeighbors | Get-Random
             $cell.Link($neighbor,$true)
         }
     }
@@ -182,6 +183,6 @@ class BinaryTree {
 
 cls
 
-$Grid = [Grid]::new(10, 10)
+$Grid = [Grid]::new($Rows, $Columns)
 $bt   = [BinaryTree]::new($Grid)
 $Grid.ToPng(40, "c:\temp\test.png")
